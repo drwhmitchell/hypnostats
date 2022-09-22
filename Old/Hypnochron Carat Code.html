@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<img id="srcIconAppleWatch"  width="32" height="32" src="https://cdn2.iconfinder.com/data/icons/apple-watch-flat-pack-1-1/842/Logo-512.png" alt="AppleWatch Icon">
+<img id="srcIconOuraRing"  width="32" height="32" src="http://ouraring.com/static/images/default_seo_image.png" alt="OuraRing Icon">
+<img id="srcIconWithingsPad"  width="32" height="32" src="https://c4-static.dodax.com/v2/1200-1200-118620996_6gamwx-png" alt="Withings Pad Icon">
+<img id="srcIconFitBit"  width="32" height="32" src="https://cdn.the5krunner.com/wp-content/uploads/2017/11/1452480358_fitbit1.png" alt="FitBit Icon">
+
+<canvas id="canvas" width="800" height="800"
+style="background-color:#d9f2ff; padding:100px; margin:auto"
+</canvas>
+
+<script>
+
+const canvasBackgroundColor = '#d9f2ff';
+
+const awakeColor = '#f91a3f';
+const lightColor = '#2e77be';
+const remColor = '#0caaff';
+const deepColor = '#133f9a';
+const dayColor = '#d9dadb';
+
+const awakeSyncColor = '#eddddf';
+const lightSyncColor = '#97a9ba';
+const remSyncColor = '#e1ecf2';
+const deepSyncColor = '#7c828f';
+const daySyncColor = '#e8e8e8';
+
+const awakeState = 0;
+const lightState = 1;
+const deepState = 2;
+const remState = 3;
+const dayState = 4;
+
+// These defaults don't hurt anytime...
+var lastStartTime = 10.0;
+var lastEndTime = 6.0;
+
+
+const gSyncMode = false;    // True if this is just to show synchronization animation
+
+const sliceAnimationDelay = 30;   // Normally 50
+const hypnoDrawDelay = 1000;    // Normally 2000
+
+const gBarIncrement = 30;
+var gTotalBarProgress = 0;
+var gREMBarProgress = 0;
+var gAwakeBarProgress = 0;
+var gDeepBarProgress = 0;
+
+const hypnoColor = [awakeColor, lightColor, deepColor, remColor, dayColor];
+const syncColor = [awakeSyncColor, lightSyncColor, deepSyncColor, remSyncColor, daySyncColor];
+
+
+// Test data hypnos are objects with 'score' and 'hypno' properties.  'hypno' is an array of objects with 3 properties:  
+// 'state' the hypnogram sleep state, 'start' the decimal hour-based start time, and 'stop', the decimal hour based end-time for that state
+// You probably have to marshall your hypnogram from arrays of UST seconds and such into my nice neat format :-)
+
+const hypno1 = {score: 91, stats: {total: 8, rem: 1.2, deep: 1.7, awake: 1.1}, hypno: [{state: dayState, start: 0, stop: 12}, {state: awakeState, start: 11.25, stop: 12.5}, {state: lightState, start: 12.5, stop: 2.0}, {state: deepState, start : 2.0, stop:2.5}, {state: lightState, start:2.5, stop:3.5}, {state:remState, start:3.5, stop:6}]};
+const hypno2 = {score: 74, stats: {total: 8, rem: 1.2, deep: 1.7, awake: 1.1}, hypno: [{state: dayState, start: 0, stop: 12}, {state: awakeState, start: 11, stop: 12}, {state: lightState, start: 12, stop: 1.5}, {state: deepState, start: 1.5, stop: 2.5}, {state: lightState, start: 2.5, stop: 3}, {state: remState, start: 3, stop:3.5}, {state: lightState, start:3.5, stop:5.75}]};
+const hypno3 = {score: 65, stats: {total: 8, rem: 1.2, deep: 1.7, awake: 1.1}, hypno: [{state: dayState, start: 0, stop: 12}, {state: awakeState, start: 10.5, stop: 11}, {state: lightState, start: 11, stop: 11.5}, {state: deepState, start: 11.5, stop: 12.5}, {state: lightState, start: 12.5, stop: 1.5}, {state: remState, start: 1.5, stop:2}, {state: lightState, start:2, stop:6}]};
+const hypnoTrued = {score: 86, stats: {total: 8, rem: 1.2, deep: 1.7, awake: 1.1}, hypno: [{state: dayState, start: 0, stop: 12}, {state: awakeState, start: 11, stop: 12}, {state: lightState, start: 12, stop: 1.5}, {state: deepState, start: 1.5, stop: 2.5}, {state: lightState, start: 2.5, stop: 3}, {state: remState, start: 3, stop:3.5}, {state: lightState, start:3.5, stop:5.75}]};
+
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var radius = canvas.height / 3.15;
+ctx.translate(radius, radius);
+radius = radius * 0.8;
+
+const barThickness = 35;
+const barSpan = radius*2;
+const barSpacing = 10;
+const barXOrigin = -radius;
+const barYOrigin = radius + 50;
+const barTextPercent = 0.30;
+const textBoxXOffset = 15;
+const textBoxYOffset = 10;
+const timeOffset = 12;
+
+const gSourceImgWidth = 96;
+const gSourceImgHeight = 96;
+
+
+
+var appleWatchImg = document.getElementById("srcIconAppleWatch");
+var ouraRingImg = document.getElementById("srcIconOuraRing");
+var withingsMatImg = document.getElementById("srcIconWithingsPad");
+var fitBitImg = document.getElementById("srcIconFitBit");
+
+
+var gSourceDeviceImg = [appleWatchImg, ouraRingImg, withingsMatImg, fitBitImg];
+var gSourceImgFrame = 0;
+
+
+
+var loopIndex = 0;
+var intervalTimer;
+var doneDelay = false;
+
+var numTestHypnos = 1;
+
+//drawAllHypnos([hypno1, hypno2, hypno3, hypnoTrued]);
+
+var hypnoTimerIndex = 0;
+var hypnoTimer;
+//var hypnos = [hypno1, hypno2, hypno3, hypnoTrued];
+
+//var testGram = createTestHypno(11.0, 6.5);
+//console.log("Test Hypno = " + testGram);
+//const testHypno = createCompleteHypno(createTestScore(50, 100), testGram);
+
+var hypnos = [];
+for (j=0; j<numTestHypnos; j++)
+   hypnos.push(createCompleteHypno(createRandomTestScore(50, 100), createRandomTestStats(), createRandomTestHypno(11.0, 6.5)));
+
+
+drawHypnoPaintSequence();
+
+function createRandomTestScore(min, max) {
+
+   var testScore = Math.floor(min + Math.random()*(max-min));
+   console.log("Random Test Score = " + testScore);
+
+   return(testScore);
+}
+
+function createRandomTestStats() {
+   const statObj = {total: 8, rem: 1.2, deep: 1.7, awake: 1.1};
+   return(statObj);
+}
+
+// Draw the first Hypno w/o delay, then start animation delay timed draw
+function drawHypnoPaintSequence()
+{
+   console.log("Entered drawHypnoPaintSequence/n");
+
+      drawHypnochron(hypnos[hypnoTimerIndex].hypno, hypnos[hypnoTimerIndex].score);
+      hypnoTimerIndex++;
+      gTotalBarProgress = 0;
+      gREMBarProgress = 0;
+      gAwakeBarProgress = 0;
+      gDeepBarProgress = 0;
+      hypnoTimer = setInterval(drawHypnosOnTimer, hypnoDrawDelay, hypnos);
+}
+
+function createCompleteHypno(scoreing, statistics, hypnogram) {
+   const h = {};
+   h.score = scoreing; 
+   h.stats = statistics;
+   h.hypno = hypnogram;
+   return(h);
+}
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function createRandomTestHypno(approxOnset, approxAwake) {
+   // Pick random start time around the approx onset
+   var newHypno = [];
+   var newSlice = {};
+
+console.log("CreateTestHypno/n");
+
+   startTime = approxOnset + (getRandomInt(3) - 2);  // a random time +/- 2 hours from approxOnset
+   endTime = approxAwake + (getRandomInt(3) - 2);  // a random time +/- 2 hours from approxOnset
+   sleepSpan = (12 - (startTime % 12)) + endTime;
+
+console.log("StartTime/EndTime/SleepSpan: " + startTime + "/ " + endTime + "/" + sleepSpan);
+
+newSlice = {state: dayState, start: 0, stop: 12};
+newHypno.push(newSlice);
+
+   // Now artificially advance the time by 3 hours so we don't have to deal with the 12-1 break
+   currentTime = startTime;
+   currentState = -1;
+   sleepTracked = 0;
+   while (sleepTracked <= sleepSpan) {
+      sleepInterval = (random(55)+5)/60; 
+      currentState = pickALikelyState(currentState);
+      newSlice = createNewSlice(currentState, currentTime, ((currentTime + sleepInterval) % 13) + Math.floor(((currentTime + sleepInterval) / 13)));
+      currentTime = newSlice.stop;
+      sleepTracked = sleepTracked + sleepInterval;
+      newHypno.push(newSlice);
+      console.log("The new HypnoSlice is: {"+ Math.round(newSlice.state) +"," + Math.round(newSlice.start) + "," + Math.round(newSlice.stop) + "}");
+  }
+   return (newHypno);
+}
+
+function pickALikelyState(currentState) {
+   switch (currentState) {
+      case -1 : return(awakeState); return;
+      case awakeState : return(lightState);
+         break;
+      case lightState : if (random(2) == 1) { 
+                           return(remState);
+                        } else {
+                           return(deepState);
+                        }
+         break;
+      case deepState : return(lightState);
+         break;
+      case remState : if (random(2) == 1) return(awakeState);
+                        else return(lightState);
+         break;      
+   }
+}
+
+function createNewSlice(newState, newStart, newStop) {
+   const newSlice = {state: newState, start: newStart, stop:  newStop};
+   return(newSlice);
+}
+
+function random(number) {
+  const result = Math.floor(Math.random() * number);
+  return result;
+}
+
+
+function drawHypnosOnTimer(hypnoSet) {
+
+   if (hypnoTimerIndex == hypnoSet.length) {
+      clearInterval(hypnoTimer);     
+      hypnoTimerIndex = 0;
+      gTotalBarProgress = 0;
+      gREMBarProgress = 0;
+      gAwakeBarProgress = 0;
+      gDeepBarProgress = 0;
+   } else {
+      drawHypnochron(hypnoSet[hypnoTimerIndex].hypno, hypnoSet[hypnoTimerIndex].score, hypnoSet[hypnoTimerIndex].stats);
+      hypnoTimerIndex++;
+   }
+
+}
+
+
+function drawHypnochron(hypno, score, stats) {
+ 
+
+   drawFace(ctx, radius);
+   drawNumbers(ctx, radius, stats);
+   drawTicks(ctx, radius);   
+startTime = 9.00 + Math.floor(Math.random()*10)/10;
+endTime = 6.00 + Math.floor(Math.random()*10)/10;
+
+
+//startTime = 10.5;
+//endTime = 5.75;
+
+// EraseLast Start/EndTimes
+drawStartEndTimes(ctx, radius, canvasBackgroundColor, lastStartTime, lastEndTime);
+// DrawNew Start/EndTimes
+drawStartEndTimes(ctx, radius, '#184c86', startTime, endTime);
+lastStartTime = startTime;
+lastEndTime = endTime;
+
+caratColor = '#4c6b97'
+drawCarats(ctx, radius, caratColor, startTime, endTime);
+
+
+   drawBars(ctx);
+
+   intervalTimer = setInterval(timedHypnoSlice, sliceAnimationDelay, hypno, ctx, radius, score, stats);
+
+}
+
+function timedHypnoSlice(hypnoSlices, ctx, radius, score, stats) {
+   if (loopIndex == hypnoSlices.length) {
+      drawScore(ctx, radius, score);
+      clearInterval(intervalTimer);
+      loopIndex=0;
+      gTotalBarProgress = 0;
+      gREMBarProgress = 0;
+      gDeepBarProgress = 0;
+      gAwakeBarProgress =0;
+   }
+   else {
+      slice = hypnoSlices[loopIndex++];
+      if (gSyncMode) {
+         drawPieSlice(ctx, hypnoColor[slice.state], slice.start, slice.stop);
+      }
+      else {
+         drawPieSlice(ctx, syncColor[slice.state], slice.start, slice.stop);
+   }
+      drawBarProgress(ctx, slice.state, slice.start, slice.stop, stats);
+   }
+}
+
+function drawPieSlice(ctx, sliceColor, beginTime, endTime) {
+   ctx.beginPath();
+   ctx.moveTo(0, 0);
+   ctx.arc(0, 0, radius*0.95, (1.5*Math.PI) + (beginTime*2*Math.PI)/12, (1.5*Math.PI) + (endTime*2*Math.PI)/12);
+   ctx.fillStyle = sliceColor;
+   ctx.lineTo(0, 0);
+   ctx.fill();
+}
+
+function drawScore(c, radius, hypnoScore) {
+
+   var gradient = c.createRadialGradient(0,0,0, 0,0,radius*0.45);
+   var attaBoyText; 
+   var gaugeColor; 
+
+console.log("DrawScore=" + hypnoScore);
+
+   if (hypnoScore < 70) {
+      attaBoyText = "REST UP";
+      gaugeColor = '#cfe8f7';
+   } else if (hypnoScore < 80) {
+      attaBoyText = "NOT BAD";
+      gaugeColor = '#cfe8f7';
+   } else if (hypnoScore < 90) {
+      attaBoyText = "GREAT SLEEP";
+      gaugeColor = '#cfe8f7';
+   } else {
+      attaBoyText = "OPTIMAL!";
+      gaugeColor = '#cfe8f7';
+   } 
+
+   // Add three color stops
+   gradient.addColorStop(0, 'white');
+   gradient.addColorStop(.75, gaugeColor);
+   gradient.addColorStop(1, '#b9d1e2');
+
+   // Draw the 'dial' and fill with the gradient
+   c.fillStyle = gradient;
+   c.beginPath();
+   c.arc(0, 0, radius*0.4, 0, 2*Math.PI);
+   c.fill();
+
+   //draw outer ring for the score  
+   ctx.strokeStyle = '#eaf0f';
+   ctx.lineWidth = 3;
+   ctx.beginPath();
+   ctx.arc(0, 0, radius*0.4, 0, 2 * Math.PI);
+   ctx.stroke();
+
+   //draw outer ring around hypnogram
+   ctx.strokeStyle = '#eaf0f';
+   ctx.lineWidth = 1;
+   ctx.beginPath();
+   ctx.arc(0, 0, radius*.96, 0, 2 * Math.PI);
+   ctx.stroke();
+
+
+ctx.drawImage(gSourceDeviceImg[gSourceImgFrame++ % 4], -gSourceImgWidth/2, -gSourceImgHeight/2, gSourceImgWidth, gSourceImgHeight);
+
+
+   if (gSyncMode) {
+// draw score
+   c.font = "bold " + radius*0.4 + "px Calibri";
+   c.textBaseline="middle";
+   c.textAlign="center";
+   c.fillStyle = '#000';
+   c.translate(0, 0);
+   c.fillText(hypnoScore, 0, 0);
+
+   // draw the attaboy message
+   c.font = radius*0.09 + "px Calibri";
+   c.textBaseline="middle";
+   c.textAlign="center";
+   c.fillStyle = '#000';
+   c.translate(0, 39);
+   c.fillText(attaBoyText, 0, 0);
+   c.translate(0, -39);
+}
+}
+
+function drawFace(ctx, radius) {
+   var grad;
+
+// wipe the clock face
+   ctx.beginPath();
+   ctx.arc(0, 0, radius, 0, 2*Math.PI);
+   ctx.fillStyle = 'white';
+   ctx.fill();
+
+
+ctx.strokeStyle = '#b9d7ec';
+   ctx.lineWidth = radius*0.15;
+   ctx.stroke();
+   ctx.beginPath();
+   ctx.arc(0, 0, radius*0.1, 0, 2*Math.PI);
+   ctx.fillStyle = '#dee4f1';
+   ctx.fill();
+
+
+}
+
+function drawTicks(ctx, radius) {
+var ang;
+  var num;
+
+  ctx.strokeStyle = '#d9f2ff';
+  ctx.lineWidth = 1;
+  for(num = 1; num < 4*13; num++){
+
+if (num % 12 != 0) {
+    ang = num/4 * Math.PI / 6;
+    ctx.beginPath();
+    ctx.rotate(ang);
+    ctx.moveTo(radius*0.97, 0);
+    ctx.lineTo(radius*1.05, 0);
+    ctx.stroke();
+    ctx.rotate(-ang);
+  }
+  }
+ 
+}
+
+
+function drawCarats(ctx, radius, fc, startTime, endTime) {
+
+   var ang;
+   const innerRDim = 0.96;   // the % of the radius that defines the inner dimension
+   const outerRDim = 1.09;   // the % of the radius that defines the outer dimension
+   const caratWidth = 10;    // how wide the fat part of the carat triangle is
+
+   ctx.fillColor = fc;
+
+   ang = (startTime - 3) * (Math.PI)/6.0;
+
+    ctx.beginPath();
+    ctx.rotate(ang);
+    ctx.moveTo(radius*innerRDim, 0);
+    ctx.lineTo(radius*outerRDim, caratWidth);
+    ctx.lineTo(radius*outerRDim, -caratWidth);
+    ctx.fill();
+    ctx.rotate(-ang);
+
+    ang = (endTime - 3) * (Math.PI)/6.0;
+
+    ctx.beginPath();
+    ctx.rotate(ang);
+    ctx.moveTo(radius*innerRDim, 0);
+    ctx.lineTo(radius*outerRDim, caratWidth);
+    ctx.lineTo(radius*outerRDim, -caratWidth);
+    ctx.fill();
+    ctx.rotate(-ang);
+
+}
+
+
+function drawNumbers(ctx, radius) {
+   var ang;
+   var num;
+   ctx.font = radius*0.10 + "px Calibri";
+   ctx.textBaseline="middle";
+   ctx.textAlign="center";
+
+   for(num = 1; num < 13; num++){
+      if (num % 3 == 0) {
+         ang = num * Math.PI / 6;
+   console.log("Numbers angle=" + ang);
+
+         ctx.rotate(ang);
+         ctx.fillStyle = '#184c86';
+         ctx.translate(0, -radius*1.01);
+         ctx.rotate(-ang);
+         ctx.fillText(num.toString(), 0, 0);
+         ctx.rotate(ang);
+         ctx.translate(0, radius*1.01);
+         ctx.rotate(-ang);
+      }
+   }
+}
+
+function time_convert(num)
+ { 
+  var hours = Math.floor(num / 60);  
+  var minutes = num % 60;
+  return hours + ":" + minutes;         
+}
+
+function drawStartEndTimes(ctx, radius, fillColor, startTime, endTime) {
+   var ang;
+   var num;
+   ctx.font = radius*0.09 + "px Calibri";
+   ctx.textBaseline="middle";
+   ctx.textAlign="center";
+
+   num = startTime;   //draw at the 9:30 position
+   ang = num * Math.PI / 6;
+   ctx.rotate(ang);
+   ctx.fillStyle = fillColor;
+   ctx.translate(0, -radius*1.01);
+   ctx.rotate(-ang);
+ //  ctx.fillText(num.toString(), -20, 0);
+ctx.fillText(time_convert(startTime*60), -40, 0);
+
+   ctx.rotate(ang);
+   ctx.translate(0, radius*1.01);
+   ctx.rotate(-ang);
+
+   num = endTime;   //draw at the 6:30 position
+   ang = num * Math.PI / 6;
+   ctx.rotate(ang);
+   ctx.fillStyle = fillColor;
+   ctx.translate(0, -radius*1.01);
+   ctx.rotate(-ang);
+//   ctx.fillText(num.toString(), 0, 30);
+ctx.fillText(time_convert(endTime*60), 0, 25);
+
+   ctx.rotate(ang);
+   ctx.translate(0, radius*1.01);
+   ctx.rotate(-ang);
+}
+
+
+
+function drawBars(ctx) {
+
+   // Draw TOTAL bar
+   ctx.fillStyle = '#4c6b97'; 
+   ctx.fillRect(barXOrigin, barYOrigin+(0*(barThickness+barSpacing)), barSpan, barThickness);
+   ctx.fillStyle = '#0c2c69';
+   ctx.fillRect(barXOrigin, barYOrigin+(0*(barThickness+barSpacing)), barSpan*barTextPercent, barThickness);
+   ctx.font = radius*0.07 + "px Calibri";
+   ctx.textBaseline="top";
+   ctx.textAlign="left";
+   ctx.fillStyle = 'white';
+   ctx.fillText("TOTAL", barXOrigin+textBoxXOffset, barYOrigin+(0*(barThickness+barSpacing))+textBoxYOffset);
+
+   // Draw REM bar
+   ctx.fillStyle = '#68ccfe'; 
+   ctx.fillRect(barXOrigin, barYOrigin+(1*(barThickness+barSpacing)), barSpan, barThickness);
+   ctx.fillStyle = '#0cabff';
+   ctx.fillRect(barXOrigin, barYOrigin+(1*(barThickness+barSpacing)), barSpan*barTextPercent, barThickness);
+   ctx.fillStyle = 'white';
+   ctx.fillText("REM", barXOrigin+textBoxXOffset, barYOrigin+(1*(barThickness+barSpacing))+textBoxYOffset);
+
+   // Draw DEEP bar
+   ctx.fillStyle = '#648bc2'; 
+   ctx.fillRect(barXOrigin, barYOrigin+(2*(barThickness+barSpacing)), barSpan, barThickness);
+   ctx.fillStyle = '#133e9a';
+   ctx.fillRect(barXOrigin, barYOrigin+(2*(barThickness+barSpacing)), barSpan*barTextPercent, barThickness);
+   ctx.fillStyle = 'white';
+   ctx.fillText("DEEP", barXOrigin+textBoxXOffset, barYOrigin+(2*(barThickness+barSpacing))+textBoxYOffset);
+
+   // Draw AWAKE bar
+   ctx.fillStyle = '#fb5e7b'; 
+   ctx.fillRect(barXOrigin, barYOrigin+(3*(barThickness+barSpacing)), barSpan, barThickness);
+   ctx.fillStyle = '#f81a3f';
+   ctx.fillRect(barXOrigin, barYOrigin+(3*(barThickness+barSpacing)), barSpan*barTextPercent, barThickness);
+   ctx.fillStyle = 'white';
+   ctx.fillText("AWAKE", barXOrigin+textBoxXOffset, barYOrigin+(3*(barThickness+barSpacing))+textBoxYOffset);
+
+}
+
+
+
+function drawBarProgress(ctx, state, start, stop, stats) {
+
+//console.log("Total bar progress" + gTotalBarProgress);
+   // Draw TOTAL bar progress
+   ctx.fillStyle = '#0c2c69';
+   ctx.fillRect(barXOrigin+(barSpan*barTextPercent), barYOrigin+(0*(barThickness+barSpacing)), Math.min(gTotalBarProgress, barSpan-(barSpan*barTextPercent)), barThickness);
+
+   switch (state) {
+
+      case awakeState :
+         // Draw AWAKE bar progress
+         ctx.fillStyle = '#f81a3f';
+         ctx.fillRect(barXOrigin+(barSpan*barTextPercent), barYOrigin+(3*(barThickness+barSpacing)), Math.min(gAwakeBarProgress, barSpan-(barSpan*barTextPercent)), barThickness);
+         gAwakeBarProgress = gAwakeBarProgress + gBarIncrement;
+         console.log("AWAKE bar progress" + gAwakeBarProgress);
+         break;
+      case lightState :
+         break;
+      case deepState :
+         // Draw DEEP bar progress
+         ctx.fillStyle = '#133e9a';
+         ctx.fillRect(barXOrigin+(barSpan*barTextPercent), barYOrigin+(2*(barThickness+barSpacing)), gDeepBarProgress, barThickness);
+         gDeepBarProgress = gDeepBarProgress + gBarIncrement;
+         console.log("DEEP bar progress" + gDeepBarProgress);
+         break;
+      case remState :
+         // Draw REM bar progress
+         ctx.fillStyle = '#0cabff';
+         ctx.fillRect(barXOrigin+(barSpan*barTextPercent), barYOrigin+(1*(barThickness+barSpacing)), gREMBarProgress, barThickness);
+         gREMBarProgress = gREMBarProgress + gBarIncrement;
+         console.log("REM bar progress" + gREMBarProgress);
+         break;
+      case dayState :
+         break;
+      default :
+         console.log("Unexpected DEFAULT case in drawProgress");
+
+   }
+
+/*
+   ctx.font = radius*0.09 + "px Calibri";
+   ctx.textBaseline="top";
+   ctx.textAlign="left";
+   ctx.fillStyle = 'white';
+   ctx.fillText("Hello", barXOrigin+textBoxXOffset+40, barYOrigin+(0*(barThickness+barSpacing))+textBoxYOffset);
+*/
+
+gTotalBarProgress = gTotalBarProgress + 20;
+}
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,63 @@
+
+/*  HypnoChron.css */
+
+
+
+.screen {
+ 
+    background-color: black;
+    width: 100%;
+    height: 100vh;
+
+    color: #e7eaef;
+    display: flex; 
+    flex-direction: column;
+    text-align: center;   
+
+/*
+align-items: center; 
+justify-content: center;
+margin: 0px auto; 
+text-align: center;   
+*/
+}
+
+p {
+    font-family: Nunito, sans-serif;
+    font-size: 1.5em;
+}
+
+#hypnochron-container {
+    display: inline; 
+}
+
+#hypnogram-container {
+    display: inline; 
+}
+
+#stats-container {
+    display: inline; 
+}
+
+/*
+#hypnochron-canvas {
+    display: inline; 
+}
+
+
+#hypnogram-canvas {
+    display: inline; 
+}
+
+#stats-canvas {
+    display: inline; 
+
+}
+*/
+
+/*
+.inner-container {
+    width: 100%; 
+    text-align: center;
+}
+*/
