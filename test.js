@@ -9,6 +9,24 @@ const deepState = 2;
 const remState = 3;
 const dayState = 4;
 
+
+function initializePage() {
+
+//   startTime = new Date().getTime() - (12 * 3600000);
+//   endTime = startTime + (8 * 3600000);
+startTime = LastNight(21, 0);
+endTime = ThisMorning(6, 30);
+
+console.log("StartTime/EndTime = (" + startTime + "," + endTime + ")");
+   var newSleep = SynthHypno(startTime, endTime, 60);
+
+   CreateHypnochron('hypnochron-container', HYPNOGRAM_WIDTH, true, newSleep) 
+   CreateHypnogramChart('hypnogram-container', "Synth Sleep Architecture", HYPNOCHRON_WIDTH, newSleep);
+   CreateStatsChart('stats-container', "Synth Sleep Architecture", HYPNOSTATS_WIDTH, newSleep);
+
+   testSleepStateFetch();
+}
+
 function TestScoreFcn(hypnoScore) {
 
     var attaBoyText;

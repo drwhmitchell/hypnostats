@@ -268,16 +268,8 @@ function getRandomInt(max) {
 }
 
 //Helper functino that returns utc epoch time corresponding to Last Night at Hour 
-function OldLastNight(hour, min) {
-  const startDate = new Date();
-  startDate.setHours(startDate.getHours() -24);  // go back a day
-  startDate.setHours(hour, min, 0);
-  console.log("Last Night =" + startDate.toLocaleString());
-  return startDate.getTime();
-}
-
-//Helper functino that returns utc epoch time corresponding to Last Night at Hour 
-function LastNight(hour, ampm, min) {
+/*
+function LastNight(hour, min, ampm) {
   const startDate = new Date();
   var offset;
   if (ampm == "am") offset = 12;
@@ -287,9 +279,21 @@ function LastNight(hour, ampm, min) {
   console.log("Last Night =" + startDate.toLocaleString());
 return startDate.getTime();
 }
+*/
+
+// Returns a Date object with yesterday's date and the hour and min (military time)
+function LastNight(hour, min) {
+  // assume PM
+  var previous = new Date();
+  previous.setDate(previous.getDate() - 1);
+  previous.setHours(hour);
+  previous.setMinutes(min);
+  return previous.getTime();
+}
 
 //Helper functino that returns utc epoch time corresponding to Last Night at Hour 
 function ThisMorning(hour, min) {
+  // assumes 'am'
   const startDate = new Date();
   startDate.setHours(hour, min, 0);
   console.log("This Morning =" + startDate.toLocaleString());

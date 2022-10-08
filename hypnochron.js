@@ -32,9 +32,9 @@ const HYPNO_TICK_COLOR = '#485086';
 
 const HYPNO_SLICE_DRAW_DELAY = 60;   // Normally 50
 const HYPNOGRAM_WIDTH = 600;
-const HYPNOCHRON_WIDTH = 380;
-const HYPNOSTATS_WIDTH = 380;
-const HYPNO_OUTER_RADIUS = HYPNOGRAM_WIDTH/3.15;
+const HYPNOCHRON_WIDTH = 600;
+const HYPNOSTATS_WIDTH = 600;
+const HYPNO_OUTER_RADIUS = HYPNOGRAM_WIDTH/3.14;
 const HYPNO_INNER_RADIUS = HYPNO_OUTER_RADIUS * 0.7;
 
 const DIAL_NUMBERS_TEXT_COLOR = '#e7eaef';
@@ -42,16 +42,7 @@ const DIAL_NUMBERS_TEXT_COLOR = '#e7eaef';
 var loopIndex = 0;
 var intervalTimer;
 
-function initializePage() {
 
-    startTime = new Date().getTime() - (12 * 3600000);
-    endTime = startTime + (8 * 3600000);
-    var newSleep = SynthHypno(startTime, endTime, 60);
- 
-    CreateHypnochron('hypnochron-container', HYPNOGRAM_WIDTH, true, newSleep) 
-    CreateHypnoChart('hypnogram-container', "Synth Sleep Architecture", HYPNOCHRON_WIDTH, startTime, endTime, newSleep);
-    CreateStatsChart('stats-container', "Synth Sleep Architecture", HYPNOSTATS_WIDTH, startTime, endTime, newSleep);
-}
 
 // Creates a new HypnoGram in the div eleement 'elID' of size 'size' using the sleep data 'sleep'
 // Animates the drawing of the pie slices depending on 'isAnimated'.  Returns a ptr to the canvas used so it can be 
@@ -320,12 +311,13 @@ function DrawStartEndTimes(ctx, epochStartTime, epochEndTime) {
    ctx.rotate(-ang);
 }
 
-
+// Takes 'num' minutes and returns a formatted time string of 'hours:mins' with appropriate suffix
 function MarshallTimeForDisplay(num)
  { 
   var hours = Math.floor(num / 60);  
+//  var minutes = math.floor((num/60 - hours) * 100);
   var minutes = (num % 60).toFixed(0);
-  return hours.toFixed(0) + ":" + minutes.toString().padEnd(2,'0');         
+  return ((hours > 0) ? (hours.toFixed(0) + ":") : "") + minutes.toString().padEnd(2,'0');         
 }
  
 function MStoHours(num) {
