@@ -16,6 +16,7 @@
 // Dynamically creates a chart sleep data (Hypno, Asleep) added on the to the DOM element passed in
 // Returns a ref to the chart object so that it can be cleaned up
 function CreateHypnogramChart(chartContainerID, titleText, width, sleepArch) {
+  const GRID_COLOR = '#F2F4F6';
   const NULL_COLOR = '#FFFFFF';
   const DEEP_COLOR = '#27487C';
   const LIGHT_COLOR = '#458EC3';
@@ -95,10 +96,10 @@ function CreateHypnogramChart(chartContainerID, titleText, width, sleepArch) {
         scales: {
           x: {
             grid : {
-              borderColor: '#F2F4F6',
+              borderColor: GRID_COLOR,
               display: true,
               drawTicks: true,
-              tickColor: '#F2F4F6',
+              tickColor: GRID_COLOR,
               tickLength: 5
             },
             min: startTime,
@@ -112,7 +113,7 @@ function CreateHypnogramChart(chartContainerID, titleText, width, sleepArch) {
               }
             },
             ticks: {
-              color : '#F2F4F6',
+              color : GRID_COLOR,
               maxRotation: 0,
               autoSkip : true,
               autoSkipPadding : 5
@@ -130,8 +131,7 @@ function CreateHypnogramChart(chartContainerID, titleText, width, sleepArch) {
             min: 0.5,
             max: 4,
             ticks: {
-            color : [DEEP_COLOR, LIGHT_COLOR, REM_COLOR, WAKE_COLOR],
-//              color : stateColors,
+            color : [LIGHT_COLOR, LIGHT_COLOR, REM_COLOR, WAKE_COLOR],
               beginAtZero: true,
               min: 0,
               max: 4,
@@ -161,8 +161,13 @@ function CreateHypnogramChart(chartContainerID, titleText, width, sleepArch) {
 function CreateStatsChart(chartContainerID, titleText, width, sleepArch) {
   console.log("Creating STATS CHART");
   
-  const stateColors = ["#FFFFFF","#6ECCFF","#458EC3","#27487C"];
-//  const stateColors = ["#27487C", "#458EC3", "#6ECCFF", "#FFFFFF"];
+  const GRID_COLOR = '#F2F4F6';
+  const NULL_COLOR = '#FFFFFF';
+  const DEEP_COLOR = '#27487C';
+  const LIGHT_COLOR = '#458EC3';
+  const REM_COLOR = '#6ECCFF';
+  const WAKE_COLOR = '#F2F4F6';
+  const stateColors = [WAKE_COLOR, REM_COLOR, LIGHT_COLOR, DEEP_COLOR];
   var statsData = CalcStatsData(JSON.parse(sleepArch.hypno));
   var chartsHTML = document.getElementById(chartContainerID);
   var newHTMLbuf = [];
@@ -228,7 +233,7 @@ function CreateStatsChart(chartContainerID, titleText, width, sleepArch) {
               // Hide every 2nd tick label
               return this.getLabelForValue(val);
             },
-            color: stateColors,
+            color: [WAKE_COLOR, REM_COLOR, LIGHT_COLOR, LIGHT_COLOR],
           },
         },
       },
