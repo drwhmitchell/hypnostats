@@ -71,25 +71,44 @@ function CreateHypnochron(elID, size, isAnimated, sleep) {
    DrawDial(ctx, radius);
    if (isAnimated) {
       // for animated Hypno, just start the timer and draw the first slice
-      intervalTimer = setInterval(TimedHypnoSlice, HYPNO_SLICE_DRAW_DELAY, hypno, ctx);
+      intervalTimer = setInterval(TimedHypnoSlice, HYPNO_SLICE_DRAW_DELAY, sleep, ctx);
    } else {
       var slice;
       for (i=0; i<hypno.length; i++) {
          slice = hypno[i];
-console.log("Hypno State Colors=" + slice.x);
+//console.log("Hypno State Colors=" + slice.x);
          DrawPieSlice(ctx, HYPNO_COLORS[slice.x], slice.y[0], slice.y[1]);
      }
-     FinishHypnoPaint(hypno, ctx);
+     FinishHypnoPaint(sleep, ctx);
    }
    return (canvas);
 }
 
+function ScoreFcn(hypnoScore) {
+
+   var attaBoyText;
+console.log("Entered Score FCN");
+
+   if (hypnoScore < 70) {
+       attaBoyText = "REST UP";
+    } else if (hypnoScore < 80) {
+       attaBoyText = "NOT BAD";
+    } else if (hypnoScore < 90) {
+       attaBoyText = "GOOD SLEEP";
+    } else {
+       attaBoyText = "OPTIMAL!";
+    } 
+    return(attaBoyText);
+}
+
 // Draw center dial, carats, start and end time
-function FinishHypnoPaint(hypno, ctx) {
+function FinishHypnoPaint(sleep, ctx) {
+   hypno = JSON.parse(sleep.hypno);       // NOTE:  this is because the 'hypno' is stringified inside of the 'sleep' for historical reasons
+
    var startTime = hypno[0].y[0];   
    var endTime = hypno[hypno.length-1].y[1];
     // Finish up
-   DrawScore(ctx, TestScoreFcn, 75);
+   DrawScore(ctx, ScoreFcn, sleep.score);
 
    // Draw Start/EndTimes
    DrawStartEndTimes(ctx, startTime, endTime);
@@ -98,9 +117,10 @@ function FinishHypnoPaint(hypno, ctx) {
 }
 
 // Draw the current slice of the hypno
-function TimedHypnoSlice(hypnoSlices, ctx) {
+function TimedHypnoSlice(sleep, ctx) {
+   var hypnoSlices = sleep.hypno;
    if (loopIndex == hypnoSlices.length) 
-      FinishHypnoPaint(hypnoSlices, ctx);
+      FinishHypnoPaint(sleep, ctx);
    else {
       slice = hypnoSlices[loopIndex++];
       DrawPieSlice(ctx, HYPNO_COLORS[slice.x], slice.y[0], slice.y[1]);
@@ -122,6 +142,7 @@ function DrawPieSlice(ctx, sliceColor, epochStartTime, epochEndTime) {
 
 // Draw Score in the center of the Hypnogram
 function DrawScore(ctx, ScoreFcn, hypnoScore) {
+console.log("HYPNO SCORE(DrawScore)=" + hypnoScore);   
    var attaBoyText = ScoreFcn(hypnoScore);
 
    var gradient = ctx.createRadialGradient(0,0,0, 0,0,HYPNO_INNER_RADIUS*0.45);
@@ -202,7 +223,7 @@ function DrawNumbers(ctx) {
   for(num = 1; num < 13; num++){
      if (num % 3 == 0) {
         ang = num * Math.PI / 6;
-  console.log("Numbers angle=" + ang);
+ // console.log("Numbers angle=" + ang);
 
         ctx.rotate(ang);
         ctx.fillStyle = DIAL_NUMBERS_TEXT_COLOR;

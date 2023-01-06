@@ -13,6 +13,7 @@
      <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-moment/1.0.0/chartjs-adapter-moment.min.js"></script> 
     
+
      <!-- CSS for Bootstrap -->
 	  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
 
@@ -24,14 +25,34 @@
 
     <div id="hypnochron-container">
     </div>
-
     <div id="stats-container">
-      <p>Hypno Stats</p>
     </div>
-    
     <div id="hypnogram-container">
-      <p>Hypnogram</p>
     </div>
+
+    <br><br>
+
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+      <label class="btn btn-secondary active">
+        <input type="radio" name="options" id="option1" autocomplete="off" checked onclick="HypnoRender(1)"> Age (Q1)
+      </label>
+      <label class="btn btn-secondary">
+        <input type="radio" name="options" id="option2" autocomplete="off" onclick="HypnoRender(2)"> Extents (Q2-4)
+      </label>
+      <label class="btn btn-secondary">
+        <input type="radio" name="options" id="option3" autocomplete="off" onclick="HypnoRender(3)"> Dreams (Q5)
+      </label>
+      <label class="btn btn-secondary">
+        <input type="radio" name="options" id="option4" autocomplete="off" onclick="HypnoRender(4)"> Awake Time (Q6-7)
+      </label>
+     <label class="btn btn-secondary">
+        <input type="radio" name="options" id="option5" autocomplete="off" onclick="HypnoRender(5)"> Deep (Q8)
+      </label>
+      <label class="btn btn-secondary">
+        <input type="radio" name="options" id="option6" autocomplete="off" onclick="HypnoRender(6)"> Calibration (Q9)
+      </label>
+    </div>
+
 
   </div>
 

@@ -10,22 +10,60 @@ const remState = 3;
 const dayState = 4;
 
 
+
+var hypnochronCanvas = null;
+var hypnogramChart = null;
+var statsChart = null;
+
 function initializePage() {
-
-//   startTime = new Date().getTime() - (12 * 3600000);
-//   endTime = startTime + (8 * 3600000);
-startTime = LastNight(21, 0);
-endTime = ThisMorning(6, 30);
-
-console.log("StartTime/EndTime = (" + startTime + "," + endTime + ")");
-   var newSleep = SynthHypno(startTime, endTime, 60);
-
-   CreateHypnochron('hypnochron-container', HYPNOGRAM_WIDTH, true, newSleep) 
-   CreateHypnogramChart('hypnogram-container', "Synth Sleep Architecture", HYPNOCHRON_WIDTH, newSleep);
-   CreateStatsChart('stats-container', "Synth Sleep Architecture", HYPNOSTATS_WIDTH, newSleep);
-
-   testSleepStateFetch();
+   HypnoRender(4);  // default to button 1
+   //testSleepStateFetch();
 }
+
+function HypnoRender(buttonNum) {
+   
+   // The (simulated) answers from the sleep evaluation quiz
+   // Right now the Dreams range is 0-2 with 1 being average
+   // Right now the Deep range is 0-2 with 1 being average
+   const sleepEval = {Age: 30, InBed: 23, Onset: 5, Wakeup: 5.5, Dreams: 4, WakeN: 3, WakeT: 70, Deep: 4, Overall: 10};
+   var newSleep;
+
+   switch (buttonNum) {
+      case 1 : newSleep = SleepSynthForAge(sleepEval);
+               break;
+      case 2 : newSleep = SleepSynthWithExtents(sleepEval);
+               break;
+      case 3 : newSleep = SleepSynthWithDreams(sleepEval);
+               break;
+      case 4 : newSleep = SleepSynthWithAwakes(sleepEval);
+               break;               
+      case 5 : newSleep = SleepSynthWithDeep(sleepEval);
+               break;
+      case 6 : newSleep = SleepSynthOverall(sleepEval);
+               break;
+      default : console.log("ERROR:  no actions for this button press");
+               break;
+   }
+
+        // Clean up
+   if (hypnogramChart) {
+      hypnogramChart.destroy();
+      document.getElementById('hypnogram-container').innerHTML=null;
+   }
+   if (statsChart) {
+      statsChart.destroy();
+      document.getElementById('stats-container').innerHTML=null;
+   }
+
+   // Now render everthing
+   hypnochronCanvas = CreateHypnochron('hypnochron-container', HYPNOGRAM_WIDTH, false, newSleep) 
+   statsChart = CreateStatsChart('stats-container', "Synth Sleep Architecture", HYPNOSTATS_WIDTH, newSleep);
+   hypnogramChart = CreateHypnogramChart('hypnogram-container', "Synth Sleep Architecture", HYPNOCHRON_WIDTH, newSleep);
+
+}
+
+
+/*
 
 function TestScoreFcn(hypnoScore) {
 
@@ -162,3 +200,4 @@ function DrawTestSummary(sleep) {
     targetDivEl.innerHTML = buf;
  }
  
+ */

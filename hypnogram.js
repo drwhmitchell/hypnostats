@@ -31,7 +31,7 @@ function CreateHypnogramChart(chartContainerID, titleText, width, sleepArch) {
 
   var marshalledHypno = marshallSleepNetHypno(JSON.parse(sleepArch.hypno));
   var deSteppedHypno = DeStepHypno(marshalledHypno);
-  console.log("DE-STEPPED DATA =" + JSON.stringify(deSteppedHypno));
+//  console.log("DE-STEPPED DATA =" + JSON.stringify(deSteppedHypno));
   var newChartElID = "hypnoChart" + Math.random()*10;
   var chartsHTML = document.getElementById(chartContainerID);
   var newHTMLbuf = [];
@@ -197,7 +197,9 @@ function CreateStatsChart(chartContainerID, titleText, width, sleepArch) {
           align: 'center',
           color: ['black', 'black', 'white', 'white'],
           formatter: function(value, context) {
-            return MarshallTimeForDisplay(value * 60) + (value < 1 ? ' min' : ' hr');   
+//            return MarshallTimeForDisplay(value * 60) + (value < 1 ? ' min' : ' hr');   
+return Math.round(value*60) + ' min';   
+
           }
         },
         fill: false,
@@ -273,7 +275,7 @@ function marshallSleepNetHypno(hypno) {
 
   // Finally, add a record onto the end that makes the Hypno work because the final element is there...
   newHypno.push({x: new Date(hypno[hypno.length-1].y[1]).toLocaleString(), y: hypnoState.indexOf(hypno[hypno.length-1].x)});
-  console.log("NEW HYPNO =: " + JSON.stringify(newHypno));
+//  console.log("NEW HYPNO =: " + JSON.stringify(newHypno));
   return(newHypno);
 }
 
@@ -316,12 +318,12 @@ function ToHours(ms) {
 function CalcStatsData(hypno) {
   console.log("Calcing Stats Data...");
   var wake = CountStateTime("Wake", hypno);
-  var wake = CountStateTime("Wake", hypno);
 
   hypno.score = 90;
   hypno.tst = (hypno[hypno.length-1].y[1] - hypno[0].y[0])/3600000;
-  console.log("Stats Data TST=" + hypno.tst);
+  console.log("CalcStatsData TST=" + hypno.tst);
   hypno.timedeep = CountStateTime("Deep", hypno);
+  console.log("CalcStatsData DEEP=" + hypno.timedeep/60000);
   hypno.timelight = CountStateTime("Light", hypno);
   hypno.timerem = CountStateTime("REM", hypno);
   hypno.timeawake = CountStateTime("Wake", hypno);
