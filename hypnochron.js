@@ -20,8 +20,10 @@ const REM_COLOR = '#0caaff';
 const DEEP_COLOR = '#133f9a';
 const DAY_COLOR = '#372554';
 const HYPNO_STATE_COLORS = [AWAKE_COLOR, LIGHT_COLOR, DEEP_COLOR, REM_COLOR, DAY_COLOR];
+const HYPNO_STATE_NAMES = ["Awake", "Light", "Deep", "REM", "Day"];
+const HYPNO_TIMES = ["-15%", "-20%", "-3%", "6%","9%"]
 
-const HYPNO_COLORS = { 'Wake': AWAKE_COLOR, 'Light': LIGHT_COLOR, 'REM': REM_COLOR, 'Deep': DEEP_COLOR, 'Day': DAY_COLOR};
+const HYPNO_COLORS = { 'Wake': AWAKE_COLOR, 'Light': LIGHT_COLOR, 'Deep': DEEP_COLOR, 'REM': REM_COLOR, 'Day': DAY_COLOR};
 
 const HYPNO_TIME_TEXT_COLOR = '#CCC9C8';
 const HYPNO_CARAT_COLOR = '#D2B48C';
@@ -30,7 +32,7 @@ const HYPNO_INTERIOR_COLOR = '#390245';
 const HYPNO_TIME_TEXT_BACKGROUND = '#2F4F4F';
 const HYPNO_TICK_COLOR = '#485086';
 
-const HYPNO_SLICE_DRAW_DELAY = 60;   // Normally 50
+const HYPNO_SLICE_DRAW_DELAY = 70;   // Normally 50
 const HYPNOGRAM_WIDTH = 600;
 const HYPNOCHRON_WIDTH = 600;
 const HYPNOSTATS_WIDTH = 600;
@@ -39,7 +41,10 @@ const HYPNO_INNER_RADIUS = HYPNO_OUTER_RADIUS * 0.7;
 
 const DIAL_NUMBERS_TEXT_COLOR = '#e7eaef';
 
-var loopIndex = 0;
+const NUM_HYPNO_STATES = 5;
+
+var loopIndex = 0;  // used to go through all of the slices in the hypno
+var hypnoColorIndex = 0;  // used to cycle through all of types of slices (e.g. AWAKE, LIGHT, DEEP, REM)
 var intervalTimer;
 
 
@@ -47,7 +52,7 @@ var intervalTimer;
 // Creates a new HypnoGram in the div eleement 'elID' of size 'size' using the sleep data 'sleep'
 // Animates the drawing of the pie slices depending on 'isAnimated'.  Returns a ptr to the canvas used so it can be 
 // properly disposed of...
-function CreateHypnochron(elID, size, isAnimated, sleep) {
+async function CreateHypnochron(elID, size, isAnimated, sleep) {
    var canvas, ctx, hypno, radius;
    var buf = "";
    var targetDivEl;
@@ -78,9 +83,37 @@ function CreateHypnochron(elID, size, isAnimated, sleep) {
          slice = hypno[i];
 //console.log("Hypno State Colors=" + slice.x);
          DrawPieSlice(ctx, HYPNO_COLORS[slice.x], slice.y[0], slice.y[1]);
-     }
+  
+      }
      FinishHypnoPaint(sleep, ctx);
    }
+   return (canvas);
+}
+
+async function AnalysisHypnochron(elID, size, sleep) {
+   var canvas, ctx, hypno, radius;
+   var buf = "";
+   var targetDivEl;
+   
+   // Create the canvas element to draw into 
+   targetDivEl = document.getElementById(elID);
+ //  buf += '<hypnochron-canvas id="canvas" width="' + size + '" > \
+   buf += '<canvas id="hypnochron-canvas" width="' + size + '" height="' + size * 0.6 + '"> \
+            </canvas>';
+   targetDivEl.innerHTML = buf;
+
+   // Set up to draw the sleep's hypno on the canvas
+   canvas = document.getElementById("hypnochron-canvas");
+   ctx = canvas.getContext("2d");
+   hypno = JSON.parse(sleep.hypno);       // NOTE:  this is because the 'hypno' is stringified inside of the 'sleep' for historical reasons
+   radius = HYPNO_OUTER_RADIUS;
+   ctx.translate(HYPNO_OUTER_RADIUS, HYPNO_OUTER_RADIUS);
+   radius = HYPNO_INNER_RADIUS;
+
+   // Draw dial, then slices, then the final adornments
+   DrawDial(ctx, radius);
+   // for animated Hypno, just start the timer and draw the first slice
+   intervalTimer = setInterval(TimedHypnoSlice, HYPNO_SLICE_DRAW_DELAY, sleep, ctx);
    return (canvas);
 }
 
@@ -116,16 +149,55 @@ function FinishHypnoPaint(sleep, ctx) {
    clearInterval(intervalTimer);
 }
 
+// Draw center dial, carats, start and end time
+function FinishAnalysisPaint(sleep, ctx) {
+   hypno = JSON.parse(sleep.hypno);       // NOTE:  this is because the 'hypno' is stringified inside of the 'sleep' for historical reasons
+   DrawDial(ctx, HYPNO_OUTER_RADIUS);
+   
+   // draw the attaboy message
+   ctx.font = HYPNO_INNER_RADIUS*0.22 + "px Calibri";
+   ctx.textBaseline="middle";
+   ctx.textAlign="center";
+   ctx.fillStyle = 'white';
+   ctx.translate(0, -5);
+   ctx.fillText("Calculating", 0, 0);
+   ctx.translate(0, 25);
+   ctx.fillText("Solutions...", 0, 0);
+ //  ctx.translate(0, -5);
+   
+   clearInterval(intervalTimer);
+}
+
+
 // Draw the current slice of the hypno
 function TimedHypnoSlice(sleep, ctx) {
-   var hypnoSlices = sleep.hypno;
-   if (loopIndex == hypnoSlices.length) 
-      FinishHypnoPaint(sleep, ctx);
-   else {
+   var hypnoSlices = JSON.parse(sleep.hypno);
+
+   if (loopIndex == 0 && hypnoColorIndex == 0) {
+      DrawDial(ctx, HYPNO_OUTER_RADIUS);
+      DrawAnalysisMessage(ctx, HYPNO_STATE_NAMES[0], HYPNO_TIMES[0]);
       slice = hypnoSlices[loopIndex++];
       DrawPieSlice(ctx, HYPNO_COLORS[slice.x], slice.y[0], slice.y[1]);
+
+   }
+   else if (loopIndex >= hypnoSlices.length) {
+       
+      DrawDial(ctx, HYPNO_OUTER_RADIUS);
+      DrawAnalysisMessage(ctx, HYPNO_STATE_NAMES[hypnoColorIndex], HYPNO_TIMES[hypnoColorIndex]);
+      hypnoColorIndex++;
+      loopIndex = 0; // reset the loop index
+
+      // Only end the whole thing if we've moved through all the colors
+      if (hypnoColorIndex == NUM_HYPNO_STATES-1)
+         FinishAnalysisPaint(sleep, ctx);
+   }
+   else {
+      slice = hypnoSlices[loopIndex++];
+      if ( HYPNO_COLORS[slice.x] == HYPNO_STATE_COLORS[hypnoColorIndex])
+         DrawPieSlice(ctx, HYPNO_COLORS[slice.x], slice.y[0], slice.y[1]);
    }
 }
+
 
 // Draws Hypnogram Pie slices
 function DrawPieSlice(ctx, sliceColor, epochStartTime, epochEndTime) {
@@ -192,6 +264,59 @@ console.log("HYPNO SCORE(DrawScore)=" + hypnoScore);
     ctx.fillText(attaBoyText, 0, 0);
     ctx.translate(0, -39);
 }
+
+// Draw Analysis Message
+function DrawAnalysisMessage(ctx, sleepName, sleepMetric) {
+   
+      var gradient = ctx.createRadialGradient(0,0,0, 0,0,HYPNO_INNER_RADIUS*0.45);
+    //  var gaugeColor = '#cfe8f7';
+   
+      // Add three color stops
+      gradient.addColorStop(0, 'gray');
+      gradient.addColorStop(.85, '#2F3768');
+      gradient.addColorStop(1, '#615F94');
+   
+      // Draw the 'dial' and fill with the gradient
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(0, 0, HYPNO_INNER_RADIUS*0.5, 0, 2*Math.PI);
+      ctx.fill();
+   
+      //draw outer ring for the score  
+      ctx.strokeStyle = '#eaf0f';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, HYPNO_INNER_RADIUS*0.4, 0, 2 * Math.PI);
+      ctx.stroke();
+   
+      //draw outer ring around hypnogram
+    
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, HYPNO_INNER_RADIUS*.94, 0, 2 * Math.PI);
+      ctx.stroke();
+   
+      // draw score
+   //    ctx.font = "bold " + HYPNO_INNER_RADIUS*0.5 + "px Calibri";
+   //    ctx.textBaseline="middle";
+   //    ctx.textAlign="center";
+   //    ctx.fillStyle = 'white';
+   //    ctx.translate(0, 0);
+   //    ctx.fillText(hypnoScore, 0, 0);
+   
+       // draw the attaboy message
+       ctx.font = HYPNO_INNER_RADIUS*0.22 + "px Calibri";
+       ctx.textBaseline="middle";
+       ctx.textAlign="center";
+       ctx.fillStyle = 'white';
+       ctx.translate(0, -15);
+       ctx.fillText(sleepName, 0, 0);
+       ctx.translate(0, 25);
+       ctx.fillText(sleepMetric, 0, 0);
+       ctx.translate(0, -10);
+
+   }
 
 function DrawDial(ctx) {
    

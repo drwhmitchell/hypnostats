@@ -25,7 +25,7 @@ function HypnoRender(buttonNum) {
    // The (simulated) answers from the sleep evaluation quiz
    // Right now the Dreams range is 0-2 with 1 being average
    // Right now the Deep range is 0-2 with 1 being average
-   const sleepEval = {Age: 30, InBed: 23, Onset: 5, Wakeup: 5.5, Dreams: 4, WakeN: 3, WakeT: 70, Deep: 4, Overall: 10};
+   const sleepEval = {Age: 59, InBed: 23, Onset: 5, Wakeup: 7.5, Dreams: 4, WakeN: 1, WakeT: 19, Deep: 4, Overall: 8};
    var newSleep;
 
    switch (buttonNum) {
@@ -56,9 +56,11 @@ function HypnoRender(buttonNum) {
    }
 
    // Now render everthing
-   hypnochronCanvas = CreateHypnochron('hypnochron-container', HYPNOGRAM_WIDTH, false, newSleep) 
-   statsChart = CreateStatsChart('stats-container', "Synth Sleep Architecture", HYPNOSTATS_WIDTH, newSleep);
-   hypnogramChart = CreateHypnogramChart('hypnogram-container', "Synth Sleep Architecture", HYPNOCHRON_WIDTH, newSleep);
+ //  hypnochronCanvas = CreateHypnochron('hypnochron-container', HYPNOGRAM_WIDTH, false, newSleep);
+   hypnochronCanvas = AnalysisHypnochron('hypnochron-container', HYPNOGRAM_WIDTH, newSleep);
+ //  hypnochronCanvas = CreateHypnochron('hypnochron-container', HYPNOGRAM_WIDTH, true, newSleep);
+ //  statsChart = CreateStatsChart('stats-container', "Synth Sleep Architecture", HYPNOSTATS_WIDTH, newSleep);
+ //  hypnogramChart = CreateHypnogramChart('hypnogram-container', "Synth Sleep Architecture", HYPNOCHRON_WIDTH, newSleep);
 
 }
 
